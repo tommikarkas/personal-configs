@@ -1,7 +1,9 @@
 #!/bin/bash
-PWD=$(pwd)
-PROJECT_DIR=projects/personal-configs/"
-TARGET_DIR="${PWD}${PROJECT_DIR}"
-ln -s ~/.bashrc "$TARGET_DIR/.bashrc"
-ln -s ~/.bash_aliases "$TARGET_DIR/.bash_aliases"
-ln -s ~/.vimrc "$TARGET_DIR/.vimrc"
+set -e
+set -x
+
+PROJECT_DIR="/projects/personal-configs/"
+TARGET_DIR="${HOME}${PROJECT_DIR}"
+ln -s "${TARGET_DIR}.bashrc" ~/.bashrc 
+ln -s "${TARGET_DIR}.bash_aliases" ~/.bash_aliases 
+ln -s "${TARGET_DIR}.vimrc" ~/.vimrc 

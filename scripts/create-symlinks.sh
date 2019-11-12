@@ -4,7 +4,7 @@ set -x
 
 PROJECT_DIR="/projects/personal-configs/"
 TARGET_DIR="${HOME}${PROJECT_DIR}"
-ln -s "${TARGET_DIR}.bashrc" ~/.bashrc 
-ln -s "${TARGET_DIR}.bash_aliases" ~/.bash_aliases 
-ln -s "${TARGET_DIR}.vimrc" ~/.vimrc 
-ln -s "${TARGET_DIR}.env_vars" ~/.env_vars 
+ln -fs "${TARGET_DIR}.bashrc" ~/.bashrc 
+ln -fs "${TARGET_DIR}.bash_aliases" ~/.bash_aliases 
+ln -fs "${TARGET_DIR}.vimrc" ~/.vimrc 
+ln -fs "${TARGET_DIR}.env_vars" ~/.env_vars 

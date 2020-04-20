@@ -2,7 +2,7 @@
 set -e
 set -x
 
-PROJECT_DIR="/projects/personal-configs/"
+PROJECT_DIR="/Projects/personal-configs/"
 TARGET_DIR="${HOME}${PROJECT_DIR}"
 ln -fs "${TARGET_DIR}.bashrc" ~/.bashrc 
 ln -fs "${TARGET_DIR}.bash_aliases" ~/.bash_aliases 

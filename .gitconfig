@@ -2,6 +2,6 @@
 [user]
 # Please adapt and uncomment the following lines:
 	name = Tommi Kärkäs
-	email = tommi.karkas@gofore.com
+    email = tommikarkas@gmail.com
 [core]
 	editor = /usr/bin/vim

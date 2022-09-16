@@ -5,3 +5,4 @@ alias less='less -R'
 alias openvault='vault login -method=github token=$(gpg -d ~/.config/vault/gh.token.gpg)'
 alias k="kubectl"
 alias g=git
+alias resume="tmux attach -t 0"

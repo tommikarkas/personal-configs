@@ -17,7 +17,7 @@ installBrewPackages () {
 }
 
 installBrewCaskPackages () {
-    brew cask install ${CASK_PACKAGES}
+    brew casks install ${CASK_PACKAGES}
 }
 setBashProfile () {
     ln -fs "${TARGET_DIR}.bash_profile" ~/.bash_profile 

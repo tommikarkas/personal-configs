@@ -1,0 +1,19 @@
+# Copy to ~/.config/firstmate/panels.conf (chmod 600) and fill in.
+# Kept out of git so organisation, account and service details stay private.
+
+FM_HOME=$HOME/Projects/Personal/firstmate
+
+# PR panel
+GH_ORG=your-github-org
+GH_AUTHOR=your-github-username
+
+# Production health panel
+PROD_HEALTH_ACCOUNT_ID=123456789012
+PROD_HEALTH_REGION=eu-central-1
+PROD_HEALTH_AWS_PROFILE=my-production-readonly
+PROD_HEALTH_SERVICES='[
+  {"key":"web","label":"web app","cluster":"web","service":"web","tg":"web",
+   "match_re":"(^|[^a-z0-9-])web([^a-z0-9-]|$)","dash":null,"appsignals":false},
+  {"key":"worker","label":"background worker","cluster":"worker","service":"worker","tg":null,
+   "match_re":"worker","dash":null,"appsignals":false}
+]'

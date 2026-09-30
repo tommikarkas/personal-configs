@@ -1,0 +1,66 @@
+#!/usr/bin/env bash
+# firstmate - start (or reattach to) the herdr "default" session with the
+# first mate running, from any directory.
+#
+#   firstmate              ensure the herdr server, the "firstmate" workspace and
+#                          the first mate (claude) are up, then attach to herdr
+#   firstmate --no-attach  do the same without attaching (for scripts or checks)
+#
+# The first mate itself restores the rest at its session start: it relaunches
+# unfinished workers from their records and restarts the PRs and Prod health
+# panels.
+set -euo pipefail
+
+# Local settings (organisation, accounts, services) live outside this repo.
+panels_config=${FIRSTMATE_PANELS_CONFIG:-$HOME/.config/firstmate/panels.conf}
+# shellcheck source=/dev/null
+[ -r "$panels_config" ] && . "$panels_config"
+FM_HOME_DIR=${FM_HOME:-$HOME/firstmate}
+SESSION=default
+LABEL=firstmate
+attach=1
+[ "${1:-}" = "--no-attach" ] && attach=0
+
+h() { herdr --session "$SESSION" "$@"; }
+
+# 1. Herdr server for the named session.
+if ! herdr session list 2>/dev/null | awk -v s="$SESSION" '$1 == s && $2 == "running" { found = 1 } END { exit !found }'; then
+  echo "firstmate: starting herdr session '$SESSION'"
+  nohup herdr --session "$SESSION" server >/dev/null 2>&1 &
+  for _ in $(seq 1 50); do
+    h workspace list >/dev/null 2>&1 && break
+    sleep 0.2
+  done
+fi
+h workspace list >/dev/null 2>&1 || { echo "firstmate: herdr session '$SESSION' did not come up" >&2; exit 1; }
+
+# 2. The "firstmate" workspace (created in the firstmate home if missing).
+ws=$(h workspace list | jq -r --arg l "$LABEL" '.result.workspaces[] | select(.label == $l) | .workspace_id' | head -n1)
+if [ -z "$ws" ]; then
+  echo "firstmate: creating the '$LABEL' workspace"
+  ws=$(h workspace create --cwd "$FM_HOME_DIR" --label "$LABEL" --no-focus | jq -r '.. | .workspace_id? // empty' | head -n1)
+fi
+
+# 3. The first mate's pane: the first pane of that workspace whose cwd is the
+#    firstmate home; start claude there unless an agent is already running.
+panes=$(h pane list)
+pane=$(printf '%s' "$panes" | jq -r --arg w "$ws" --arg d "$FM_HOME_DIR" \
+  '[.result.panes[] | select(.workspace_id == $w and .cwd == $d)] | sort_by(.pane_id) | .[0].pane_id // empty')
+[ -n "$pane" ] || pane=$(printf '%s' "$panes" | jq -r --arg w "$ws" '[.result.panes[] | select(.workspace_id == $w)] | sort_by(.pane_id) | .[0].pane_id // empty')
+if [ -z "$pane" ]; then
+  echo "firstmate: no pane found in workspace $ws" >&2
+  exit 1
+fi
+agent=$(h pane get "$pane" | jq -r '.result.pane.agent // empty')
+if [ "$agent" = "claude" ] && [ "$(h pane get "$pane" | jq -r '.result.pane.agent_status // empty')" != "unknown" ]; then
+  echo "firstmate: first mate already running in $pane"
+else
+  echo "firstmate: starting the first mate in $pane"
+  h pane run "$pane" "cd '$FM_HOME_DIR' && claude" >/dev/null
+fi
+h workspace focus "$ws" >/dev/null 2>&1 || true
+
+# 4. Attach.
+if [ "$attach" = 1 ]; then
+  exec herdr --session "$SESSION"
+fi

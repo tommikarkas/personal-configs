@@ -220,7 +220,7 @@ badge() {
 draw() {
   local status=$1 note=${2:-}
   printf '\033[H\033[2J\033[3J'
-  printf '\033[1mProduction health\033[0m  \033[2m%s  CloudWatch %s\033[0m\n' "$(date +%H:%M)" "$region"
+  printf '\033[1mProduction health\033[0m  \033[2m%s  CloudWatch %s\033[0m\n' "$(date +%H:%M:%S)" "$region"
   [ -z "$status" ] || printf '%s\n' "$status"
   [ -z "$note" ] || printf '%s%s%s\n' "$dim" "$note" "$rst"
   printf '\n'
@@ -335,4 +335,5 @@ while :; do
   trap 'resized=1' WINCH
   read -rsn1 -t "$interval" key </dev/tty 2>/dev/null || true
   trap - WINCH
+  [ -n "$key" ] && printf '\033[H\033[2m↻ refreshing…\033[0m\033[K'
 done

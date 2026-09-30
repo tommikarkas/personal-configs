@@ -135,7 +135,7 @@ render() {
   done <<<"$(printf '%s\n%s\n' "$open_urls" "$merged_urls" | sort -u)"
   rm -rf "$dcache"
 
-  printf '\033[1mPRs\033[0m  \033[2m%s  (merged ones stay until 24h after production deploy)\033[0m\n\n' "$(date +%H:%M)"
+  printf '\033[1mPRs\033[0m  \033[2m%s  (merged ones stay until 24h after production deploy)\033[0m\n\n' "$(date +%H:%M:%S)"
   if [ -z "$rows" ]; then
     printf 'none\n'
     return
@@ -186,5 +186,6 @@ while :; do
   read -rsn1 -t "$interval" key </dev/tty 2>/dev/null || true
   trap - WINCH
   if [ "$resized" = 1 ]; then draw_out; continue; fi
+  [ -n "$key" ] && printf '\033[H\033[2m↻ refreshing…\033[0m\033[K'
   out=$(render); draw_out
 done

@@ -53,6 +53,7 @@ red=$'\033[31m' yel=$'\033[33m' dim=$'\033[2m' rst=$'\033[0m'
 #   match_re    regex matched against alarm names, metric names and dimension values
 #   dash        CloudWatch dashboard name to link instead of the ECS service page, or null
 #   appsignals  true when CloudWatch Application Signals covers the service
+#   log_group   optional CloudWatch Logs group (default /aws/ecs/services/<service>)
 services=${PROD_HEALTH_SERVICES:-[]}
 
 work=$(mktemp -d "${TMPDIR:-/tmp}/prod-health.XXXXXX") || exit 1
@@ -142,7 +143,7 @@ build_payload() {
 }
 
 # Turns the metric and alarm responses into one TSV row per service:
-# key, label, state, detail, url
+# key, label, state, detail, url, logs url
 compute_rows() {
   jq -r -n --argjson svc "$services" --arg console "$console" --arg region "$region" \
     --slurpfile mm "$metrics_file" --slurpfile aa "$alarms_file" '
@@ -205,7 +206,10 @@ compute_rows() {
        end) as $detail
     | (if $sv.dash then $console + "/cloudwatch/home?region=" + $region + "#dashboards/dashboard/" + $sv.dash
        else $console + "/ecs/v2/clusters/" + $sv.cluster + "/services/" + $sv.service + "/health?region=" + $region end) as $url
-    | [ $sv.key, $sv.label, $state, $detail, $url ] | @tsv'
+    | ($sv.log_group // ("/aws/ecs/services/" + $sv.service)) as $lg
+    | ($console + "/cloudwatch/home?region=" + $region + "#logsV2:log-groups/log-group/"
+       + ($lg | gsub("/"; "$252F"))) as $logs
+    | [ $sv.key, $sv.label, $state, $detail, $url, $logs ] | @tsv'
 }
 
 badge() {
@@ -224,11 +228,13 @@ draw() {
   [ -z "$status" ] || printf '%s\n' "$status"
   [ -z "$note" ] || printf '%s%s%s\n' "$dim" "$note" "$rst"
   printf '\n'
-  local key label state detail url
-  while IFS=$'\t' read -r key label state detail url; do
+  local key label state detail url logs
+  while IFS=$'\t' read -r key label state detail url logs; do
     [ -n "$key" ] || continue
     printf ' %s ' "$(badge "$state")"
     link "$url" "$(printf '%-30s' "$label")"
+    printf ' '
+    link "$logs" $'\033[36mlogs\033[0m'
     case $state in
       DOWN|ALERT) printf ' \033[31m%s\033[0m' "$detail" ;;
       DEGRADED|ERR) printf ' \033[33m%s\033[0m' "$detail" ;;

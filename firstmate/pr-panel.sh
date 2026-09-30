@@ -166,7 +166,10 @@ render() {
 # pane height, so a list taller than the pane never piles copies into scrollback.
 draw_out() {
   local rows total
-  rows=$(tput lines 2>/dev/null || echo 40)
+  # tput inside $(...) cannot see the terminal (its stdout is a pipe) and falls
+  # back to 24 rows; ask the tty itself instead.
+  rows=$(stty size </dev/tty 2>/dev/null | cut -d' ' -f1)
+  case $rows in ''|*[!0-9]*) rows=$(tput lines 2>/dev/null || echo 40) ;; esac
   total=$(printf '%s\n' "$out" | wc -l | tr -d ' ')
   printf '\033[H\033[2J\033[3J'
   if [ "$total" -gt "$rows" ]; then

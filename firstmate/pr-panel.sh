@@ -95,17 +95,20 @@ render() {
     # reviewDecision stays empty in repos without required reviews, so derive
     # the badge from each reviewer's latest review instead.
     info=$(gh pr view "$num" -R "$org/$repo" \
-             --json state,isDraft,title,reviewDecision,latestReviews,mergedAt,mergeCommit,baseRefName \
+             --json state,isDraft,title,reviewDecision,latestReviews,mergedAt,mergeCommit,baseRefName,createdAt \
              --jq '([.latestReviews[].state]) as $s
                    | (if ($s|index("CHANGES_REQUESTED")) then "CHANGES_REQUESTED"
                       elif ($s|index("APPROVED")) then "APPROVED"
                       else (.reviewDecision // "-") end) as $d
-                   | [.state, (.isDraft|tostring), $d, (.mergeCommit.oid // "-"), .baseRefName, (.mergedAt // "-"), .title]
+                   | [.state, (.isDraft|tostring), $d, (.mergeCommit.oid // "-"), .baseRefName, (.mergedAt // "-"), .createdAt, .title]
                    | join("\u001f")' 2>/dev/null) || continue
     [ -n "$info" ] || continue
     state=${info%%$'\x1f'*}
-    local rest=${info#*$'\x1f'} draft decision merge base merged_at title status=""
-    IFS=$'\x1f' read -r draft decision merge base merged_at title <<<"$rest"
+    local rest=${info#*$'\x1f'} draft decision merge base merged_at created_at title status="" group key
+    IFS=$'\x1f' read -r draft decision merge base merged_at created_at title <<<"$rest"
+    # Order within a repo: open PRs by creation time, then merged-but-not-released
+    # by merge time, then released PRs by first production deploy time.
+    group=0; key=$(iso_epoch "$created_at")
     case "$state" in
       OPEN)
         [ "$draft" = true ] && status="draft"
@@ -124,14 +127,14 @@ render() {
         fi
         if [ -n "$at" ]; then
           [ $(( $(now) - at )) -gt "$keep_after_deploy" ] && continue
-          status="prod:$at"
+          status="prod:$at"; group=2; key=$at
         else
-          status="merged"
+          status="merged"; group=1; key=$(iso_epoch "$merged_at")
         fi
         ;;
       *) continue ;;
     esac
-    rows+="$repo"$'\x1f'"$num"$'\x1f'"$url"$'\x1f'"$status"$'\x1f'"$title"$'\n'
+    rows+="$repo"$'\x1f'"$group"$'\x1f'"$key"$'\x1f'"$num"$'\x1f'"$url"$'\x1f'"$status"$'\x1f'"$title"$'\n'
   done <<<"$(printf '%s\n%s\n' "$open_urls" "$merged_urls" | sort -u)"
   rm -rf "$dcache"
 
@@ -159,7 +162,7 @@ render() {
     printf ' \033[2m#%s\033[0m ' "$num"
     link "$url" "$title"
     printf "%b\n" "$tag"
-  done <<<"$(printf '%s' "$rows" | sort -t$'\x1f' -k1,1 -k2,2n)"
+  done <<<"$(printf '%s' "$rows" | sort -t$'\x1f' -k1,1 -k2,2n -k3,3n -k4,4n | cut -d$'\x1f' -f1,4-)"
 }
 
 # Render into a buffer, then clear screen and scrollback and print it capped to the

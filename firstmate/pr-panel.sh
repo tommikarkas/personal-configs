@@ -156,8 +156,8 @@ render() {
       draft) tag=" \033[2m(draft)\033[0m" ;;
       approved) tag=" \033[32m✓\033[0m" ;;
       changes) tag=" \033[31m✗\033[0m" ;;
-      merged) tag=" \033[33m⧗ merged, not in production yet\033[0m" ;;
-      prod:*) tag=" \033[32m● in production $(ago "${status#prod:}")\033[0m" ;;
+      merged) tag=" \033[33m⧗ merged\033[0m" ;;
+      prod:*) tag=" \033[32m● prod $(ago "${status#prod:}")\033[0m" ;;
     esac
     printf ' \033[2m#%s\033[0m ' "$num"
     link "$url" "$title"

@@ -7,8 +7,9 @@ Personal helpers for running firstmate in herdr. They are symlinked into place:
 | `firstmate` | `~/.local/bin/firstmate` | Starts or reattaches the herdr `default` session with the first mate running. `firstmate --no-attach` does the same without attaching. |
 | `pr-panel.sh` | `<firstmate home>/data/pr-panel.sh` | Live list of your PRs in one GitHub organisation with review state, plus merged PRs until 24h after their production deploy. |
 | `prod-health-panel.sh` | `<firstmate home>/data/prod-health-panel/prod-health-panel.sh` | Live production health of configured ECS services from CloudWatch, read with an AWS SSO profile. |
+| `questions-panel.sh` | `<firstmate home>/data/questions-panel.sh` | Numbered list of the questions the first mate is waiting for you to answer, read from `<firstmate home>/data/open-questions.md`; redraws when that file changes. |
 
-Both panels redraw every 60 seconds. In a focused panel pane, press `r` (or Enter) to refresh now; resizing the pane redraws at the new size.
+The PR and health panels redraw every 60 seconds; the questions panel redraws when its file changes. In a focused panel pane, press `r` (or Enter) to refresh now; resizing the pane redraws at the new size.
 
 ## Settings
 
@@ -20,4 +21,5 @@ Organisation, accounts and services are not in this repo. Copy `panels.conf.exam
 ln -sf "$PWD/firstmate/firstmate" ~/.local/bin/firstmate
 ln -sf "$PWD/firstmate/pr-panel.sh" "$FM_HOME/data/pr-panel.sh"
 ln -sf "$PWD/firstmate/prod-health-panel.sh" "$FM_HOME/data/prod-health-panel/prod-health-panel.sh"
+ln -sf "$PWD/firstmate/questions-panel.sh" "$FM_HOME/data/questions-panel.sh"
 ```

@@ -86,6 +86,7 @@ render() {
   merged_urls=$(gh search prs --author "$author" --owner "$org" --merged --merged-at ">=$since" --limit 50 \
                   --json url --jq '.[].url' 2>/dev/null | sort -u)
   rows=""
+  local open_count=0
   local dcache; dcache=$(mktemp -d "${TMPDIR:-/tmp}/fm-pr-panel.XXXXXX")
   while IFS= read -r url; do
     [ -n "$url" ] || continue
@@ -111,6 +112,7 @@ render() {
     group=0; key=$(iso_epoch "$created_at")
     case "$state" in
       OPEN)
+        open_count=$((open_count + 1))
         [ "$draft" = true ] && status="draft"
         [ "$decision" = APPROVED ] && status="approved"
         [ "$decision" = CHANGES_REQUESTED ] && status="changes"
@@ -138,7 +140,7 @@ render() {
   done <<<"$(printf '%s\n%s\n' "$open_urls" "$merged_urls" | sort -u)"
   rm -rf "$dcache"
 
-  printf '\033[1mPRs\033[0m  \033[2m%s  (merged ones stay until 24h after production deploy)\033[0m\n\n' "$(date +%H:%M:%S)"
+  printf '\033[1mPRs\033[0m  \033[1;36m%s open\033[0m  \033[2m%s  (merged ones stay until 24h after production deploy)\033[0m\n\n' "$open_count" "$(date +%H:%M:%S)"
   if [ -z "$rows" ]; then
     printf 'none\n'
     return

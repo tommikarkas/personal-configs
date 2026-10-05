@@ -27,7 +27,25 @@ wrapped() {
   while IFS= read -r l; do
     if [ "$i" -eq 0 ]; then printf '%b%s\n' "$first" "$l"; else printf '%s%s\n' "$pad" "$l"; fi
     i=$((i + 1))
-  done < <(printf '%s\n' "$text" | fold -s -w "$((cols - width))")
+  done < <(printf '%s\n' "$text" | wordwrap "$((cols - width))")
+}
+
+# Wrap at spaces only, never inside a word, so a long URL or path stays one
+# unbroken line (the terminal soft-wraps it, and copying it gives no newlines).
+# URLs become clickable OSC 8 links.
+wordwrap() {
+  awk -v w="$1" '{
+    line = ""
+    for (i = 1; i <= NF; i++) {
+      word = $i
+      if (word ~ /^https?:\/\//) word = "\033]8;;" word "\033\\" word "\033]8;;\033\\"
+      vis = length($i)
+      if (line == "") { line = word; len = vis }
+      else if (len + 1 + vis <= w) { line = line " " word; len += 1 + vis }
+      else { print line; line = word; len = vis }
+    }
+    print line
+  }'
 }
 
 draw() {

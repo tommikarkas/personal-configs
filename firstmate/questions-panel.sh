@@ -17,7 +17,7 @@ file="$home/data/open-questions.md"
 trap 'exit 130' INT TERM
 trap 'draw' WINCH
 
-mtime() { stat -f %m "$file" 2>/dev/null || echo 0; }
+mtime() { stat -c %Y "$file" 2>/dev/null || stat -f %m "$file" 2>/dev/null || echo 0; }
 
 # Wrap plain text to a width first, so colour codes never skew the line breaks.
 # $1 first-line prefix (may hold colour codes), $2 its visible width, $3 text.
